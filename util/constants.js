@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.controllerMethodsApiDocMap = exports.controllerMethodsDescriptionMap = exports.controllerMethodsReturnMap = exports.controllerMethodsParamsIdxMap = exports.importedControllerMap = exports.typeMap = exports.All = void 0;
+exports.All = Symbol('all');
+exports.typeMap = new WeakMap();
+exports.importedControllerMap = new WeakMap();
+exports.controllerMethodsParamsIdxMap = new WeakMap();
+exports.controllerMethodsReturnMap = new WeakMap();
+exports.controllerMethodsDescriptionMap = new WeakMap();
+exports.controllerMethodsApiDocMap = new WeakMap();
