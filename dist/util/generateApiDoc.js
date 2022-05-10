@@ -25,7 +25,7 @@ function generate(params, generateType) {
         unknown: 'Unknown'
     };
     const defaultValue = {
-        string: `"defaultString"`,
+        string: `"String"`,
         number: 0,
         boolean: true,
         unknown: 0
@@ -41,25 +41,25 @@ function generate(params, generateType) {
    * ${generateBody(curr.value)}
     `}`);
     }, '');
-    function generateBody(object) {
+    function generateBody(object, indent = 2) {
         const isArray = object instanceof babel_1.CreateArrayType || object.__value__;
         if (isArray) {
-            return generateArray(object);
+            return generateArray(object, indent);
         }
         if (typeof object !== 'object') {
             return defaultValue[typeof object];
         }
-        return generateObject(object);
-        function generateObject(o) {
+        return generateObject(object, indent);
+        function generateObject(o, indent) {
             let startStr = `{`;
             let endStr = `
-   * }`;
+   * ${' '.repeat(indent - 2)}}`;
             let result = Object.keys(o).reduce((prev, curr) => {
                 if (typeof o[curr] === 'object') {
                     return (prev +
                         `
-   *   "${curr}" : ` +
-                        generateBody(o[curr]));
+   * ${' '.repeat(indent)}"${curr}" : ` +
+                        generateBody(o[curr], indent + 2));
                 }
                 let validType = o[curr]
                     .split('|')
@@ -67,13 +67,14 @@ function generate(params, generateType) {
                     .trim();
                 return (prev +
                     `
-   *    "${curr}" : ` +
-                    defaultValue[validType]);
+   * ${' '.repeat(indent)}"${curr}" : ` +
+                    defaultValue[validType] +
+                    ',');
             }, '');
-            return startStr + result + endStr;
+            return startStr + result.slice(0, -1) + endStr;
         }
-        function generateArray(o) {
-            return '[' + generateBody(o.__value__) + ']';
+        function generateArray(o, indent) {
+            return '[' + generateBody(o.__value__, indent + 2) + ']';
         }
     }
     return result;

@@ -18,7 +18,7 @@
       "experimentalDecorators": true,
       "allowSyntheticDefaultImports": true,
       "strictPropertyInitialization": false,
-      "outDir": "./",
+      "outDir": "./dist",
       
   },
   "include": [

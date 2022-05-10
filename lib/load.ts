@@ -15,6 +15,7 @@ import {
 } from '../util/constants';
 import { generateApiDoc } from '../util/generateApiDoc';
 import Router from 'koa-router';
+import { IceFs } from '../util/rio-fs';
 const views = require('koa-views');
 /**
  * @description: 自动导入 controller 目录下所有类，并加载,
@@ -52,20 +53,12 @@ export async function load(
   const requireMapFile = requireMapDir + '/index.ts';
   const controllerDir = dir + '/controller';
   const apiDocAbsoluteDir = dir + '/apiDoc';
+  let iceFs = new IceFs
   if (env === 'build') {
-    if (!fs.existsSync(requireMapDir)) {
-      fs.mkdirSync(requireMapDir);
-    }
-    for (let i of fs.readdirSync(requireMapDir)) {
-      fs.unlinkSync(path.join(requireMapDir, i));
-    }
-
-    if (!fs.existsSync(apiDocAbsoluteDir)) {
-      fs.mkdirSync(apiDocAbsoluteDir);
-    }
-    for (let i of fs.readdirSync(apiDocAbsoluteDir)) {
-      fs.unlinkSync(path.join(apiDocAbsoluteDir, i));
-    }
+    iceFs.makeDir(requireMapDir)
+    iceFs.deleteAllFile(requireMapDir)
+    iceFs.makeDir(apiDocAbsoluteDir)
+    iceFs.deleteAllFile(apiDocAbsoluteDir)
     fs.writeFileSync(
       requireMapFile,
       `const requireMap = new Map
@@ -83,13 +76,11 @@ export async function load(
           const ast = parse(fileName);
           generateFinalParams(ast, controller.prototype, controllerDir);
           if (env === 'build') {
-            fs.writeFileSync(
+            iceFs.BeforeAppend(
               requireMapFile,
               `import ${controller.name} from '../${path
                 .relative(dir, fileName)
-                .slice(0, -3)}'
-${fs.readFileSync(requireMapFile)}`,
-              {}
+                .slice(0, -3)}'`
             );
             fs.appendFileSync(
               requireMapFile,
@@ -110,7 +101,6 @@ ${fs.readFileSync(requireMapFile)}`,
               `requireMap.set(${controller.name}.prototype,${i.slice(0, -3)}Map)
 `
             );
-            // todo 如果存在目录则全部删除
           }
         }
         const metadata = Reflect.getMetadata(CONTROLLER_KEY, controller);
@@ -140,7 +130,7 @@ ${fs.readFileSync(requireMapFile)}`,
             let descpritition =
               descprititionMap?.get(v.routerName) ||
               `please input @descpritition of ${v.controller}.${v.routerName}`;
-            Object.keys(paramsMap).forEach((i, index) => {
+            Object.keys(paramsMap).forEach((i) => {
               v.params.push({
                 name: i,
                 value: paramsMap[i]
@@ -153,7 +143,6 @@ ${fs.readFileSync(requireMapFile)}`,
             fs.appendFileSync(writeDir, ret);
           });
         }
-
         Reflect.construct(controller, []);
       } else {
         throw new Error(

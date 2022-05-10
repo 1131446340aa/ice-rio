@@ -35,7 +35,7 @@ function generate(
     unknown: 'Unknown'
   };
   const defaultValue = {
-    string: `"defaultString"`,
+    string: `"String"`,
     number: 0,
     boolean: true,
     unknown: 0
@@ -58,29 +58,30 @@ function generate(
     );
   }, '');
 
-  function generateBody(object: any) {
+  function generateBody(object: any, indent = 2) {
     const isArray = object instanceof CreateArrayType || object.__value__;
     if (isArray) {
-      return generateArray(object);
+      return generateArray(object, indent);
     }
     if (typeof object !== 'object') {
       //@ts-ignore
       return defaultValue[typeof object];
     }
-    return generateObject(object);
-    function generateObject(o: Record<string, any>) {
+    return generateObject(object, indent);
+    function generateObject(o: Record<string, any>, indent: number) {
       let startStr = `{`;
       let endStr = `
-   * }`;
+   * ${' '.repeat(indent - 2)}}`;
       let result: string = Object.keys(o).reduce((prev, curr) => {
         if (typeof o[curr] === 'object') {
           return (
             prev +
             `
-   *   "${curr}" : ` +
-            generateBody(o[curr])
+   * ${' '.repeat(indent)}"${curr}" : ` +
+            generateBody(o[curr], indent + 2)
           );
         }
+        //@ts-ignore
         let validType = o[curr]
           .split('|')
           .filter((i: string) => i.trim() !== 'undefined')[0]
@@ -88,16 +89,16 @@ function generate(
         return (
           prev +
           `
-   *    "${curr}" : ` +
-          defaultValue[validType as keyof typeof defaultValue]
+   * ${' '.repeat(indent)}"${curr}" : ` +
+          defaultValue[validType as keyof typeof defaultValue] +
+          ','
         );
       }, '');
-      return startStr + result + endStr;
+      return startStr + result.slice(0, -1) + endStr;
     }
-    function generateArray(o: CreateArrayType): string {
-      return '[' + generateBody(o.__value__) + ']';
+    function generateArray(o: CreateArrayType, indent: number): string {
+      return '[' + generateBody(o.__value__, indent + 2) + ']';
     }
   }
-
   return result;
 }

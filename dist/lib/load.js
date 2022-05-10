@@ -34,6 +34,7 @@ const babel_1 = require("../util/babel");
 const constants_1 = require("../util/constants");
 const generateApiDoc_1 = require("../util/generateApiDoc");
 const koa_router_1 = __importDefault(require("koa-router"));
+const rio_fs_1 = require("../util/rio-fs");
 const views = require('koa-views');
 async function load(app, { dir, initDb = false, apiDoc = false, apiDocDir, dbConfig, env }) {
     var _a, _b, _c;
@@ -61,19 +62,12 @@ async function load(app, { dir, initDb = false, apiDoc = false, apiDocDir, dbCon
     const requireMapFile = requireMapDir + '/index.ts';
     const controllerDir = dir + '/controller';
     const apiDocAbsoluteDir = dir + '/apiDoc';
+    let iceFs = new rio_fs_1.IceFs;
     if (env === 'build') {
-        if (!fs_1.default.existsSync(requireMapDir)) {
-            fs_1.default.mkdirSync(requireMapDir);
-        }
-        for (let i of fs_1.default.readdirSync(requireMapDir)) {
-            fs_1.default.unlinkSync(path_1.default.join(requireMapDir, i));
-        }
-        if (!fs_1.default.existsSync(apiDocAbsoluteDir)) {
-            fs_1.default.mkdirSync(apiDocAbsoluteDir);
-        }
-        for (let i of fs_1.default.readdirSync(apiDocAbsoluteDir)) {
-            fs_1.default.unlinkSync(path_1.default.join(apiDocAbsoluteDir, i));
-        }
+        iceFs.makeDir(requireMapDir);
+        iceFs.deleteAllFile(requireMapDir);
+        iceFs.makeDir(apiDocAbsoluteDir);
+        iceFs.deleteAllFile(apiDocAbsoluteDir);
         fs_1.default.writeFileSync(requireMapFile, `const requireMap = new Map
 `);
     }
@@ -88,10 +82,9 @@ async function load(app, { dir, initDb = false, apiDoc = false, apiDocDir, dbCon
                     const ast = babel_1.parse(fileName);
                     babel_1.generateFinalParams(ast, controller.prototype, controllerDir);
                     if (env === 'build') {
-                        fs_1.default.writeFileSync(requireMapFile, `import ${controller.name} from '../${path_1.default
+                        iceFs.BeforeAppend(requireMapFile, `import ${controller.name} from '../${path_1.default
                             .relative(dir, fileName)
-                            .slice(0, -3)}'
-${fs_1.default.readFileSync(requireMapFile)}`, {});
+                            .slice(0, -3)}'`);
                         fs_1.default.appendFileSync(requireMapFile, `const ${i.slice(0, -3)}Map = new Map
 `);
                         constants_1.typeMap.get(controller.prototype).forEach((value, key) => {
@@ -123,7 +116,7 @@ ${fs_1.default.readFileSync(requireMapFile)}`, {});
                         };
                         let descpritition = (descprititionMap === null || descprititionMap === void 0 ? void 0 : descprititionMap.get(v.routerName)) ||
                             `please input @descpritition of ${v.controller}.${v.routerName}`;
-                        Object.keys(paramsMap).forEach((i, index) => {
+                        Object.keys(paramsMap).forEach((i) => {
                             v.params.push({
                                 name: i,
                                 value: paramsMap[i]
