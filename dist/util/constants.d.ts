@@ -22,9 +22,10 @@ export interface IGenerateApiDoc {
     returns: any;
 }
 export interface ILoad {
-    dir: string;
+    rootDir: string;
+    appDir?: string;
     initDb?: boolean;
-    apiDoc?: boolean;
+    enAbleApiDoc?: boolean;
     apiDocDir?: string;
     dbConfig?: {
         port: number;

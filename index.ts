@@ -2,9 +2,6 @@ import koaBodyParser from 'koa-bodyparser';
 import Koa, { Middleware } from 'koa';
 import { load } from './lib/load';
 import { ILoad } from './util/constants';
-import  fs from 'fs';
-import { join } from 'path';
-
 export interface IConfig {
   hooks?: {
     beforeCreated?: Middleware[];
@@ -25,22 +22,24 @@ export class HttpServer extends Koa {
     this.use(koaBodyParser());
   }
   async load({
-    dir,
+    rootDir,
     initDb = false,
-    apiDoc = false,
+    enAbleApiDoc = false,
+    appDir,
     //@ts-ignore
     dbConfig = {},
     apiDocDir = '',
     env = 'dev'
   }: ILoad) {
-    this.loadConfig = {dir,
+    this.loadConfig = {rootDir,
       initDb,
-      apiDoc,
+      enAbleApiDoc,
       dbConfig,
       apiDocDir,
+      appDir,
       env}
     //@ts-ignore
-    await load(this, { dir, initDb, dbConfig, apiDoc, apiDocDir, env });
+    await load(this, { rootDir, initDb, dbConfig, enAbleApiDoc, apiDocDir, env,appDir });
     this.config?.hooks?.afterCreated?.forEach((i) => {
       this.use(i);
     });

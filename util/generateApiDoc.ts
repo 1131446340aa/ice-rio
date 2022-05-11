@@ -97,7 +97,7 @@ function generate(
       return startStr + result.slice(0, -1) + endStr;
     }
     function generateArray(o: CreateArrayType, indent: number): string {
-      return '[' + generateBody(o.__value__, indent + 2) + ']';
+      return '[ ' + generateBody(o.__value__, indent + 2) + ' ]';
     }
   }
   return result;

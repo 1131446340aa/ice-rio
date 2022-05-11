@@ -12,7 +12,7 @@ export declare class HttpServer extends Koa {
     private loadConfig;
     constructor(config: IConfig);
     init(): void;
-    load({ dir, initDb, apiDoc, dbConfig, apiDocDir, env }: ILoad): Promise<void>;
+    load({ rootDir, initDb, enAbleApiDoc, appDir, dbConfig, apiDocDir, env }: ILoad): Promise<void>;
     listen(...config: any[]): this;
 }
 export * from './lib/controller';

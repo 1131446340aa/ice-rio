@@ -2,4 +2,4 @@
 import 'reflect-metadata';
 import Koa from 'koa';
 import { ILoad } from '../util/constants';
-export declare function load(app: Koa, { dir, initDb, apiDoc, apiDocDir, dbConfig, env }: ILoad): Promise<void>;
+export declare function load(app: Koa, { rootDir, initDb, enAbleApiDoc, apiDocDir, dbConfig, env, appDir }: ILoad): Promise<void>;

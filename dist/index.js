@@ -31,15 +31,16 @@ class HttpServer extends koa_1.default {
         });
         this.use(koa_bodyparser_1.default());
     }
-    async load({ dir, initDb = false, apiDoc = false, dbConfig = {}, apiDocDir = '', env = 'dev' }) {
+    async load({ rootDir, initDb = false, enAbleApiDoc = false, appDir, dbConfig = {}, apiDocDir = '', env = 'dev' }) {
         var _a, _b, _c;
-        this.loadConfig = { dir,
+        this.loadConfig = { rootDir,
             initDb,
-            apiDoc,
+            enAbleApiDoc,
             dbConfig,
             apiDocDir,
+            appDir,
             env };
-        await load_1.load(this, { dir, initDb, dbConfig, apiDoc, apiDocDir, env });
+        await load_1.load(this, { rootDir, initDb, dbConfig, enAbleApiDoc, apiDocDir, env, appDir });
         (_c = (_b = (_a = this.config) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.afterCreated) === null || _c === void 0 ? void 0 : _c.forEach((i) => {
             this.use(i);
         });

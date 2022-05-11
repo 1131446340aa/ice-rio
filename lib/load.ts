@@ -24,10 +24,19 @@ const views = require('koa-views');
  */
 export async function load(
   app: Koa,
-  { dir, initDb = false, apiDoc = false, apiDocDir, dbConfig, env }: ILoad
+  {
+    rootDir,
+    initDb = false,
+    enAbleApiDoc = false,
+    apiDocDir,
+    dbConfig,
+    env,
+    appDir = ''
+  }: ILoad
 ) {
+  const appDirAbsolutePath = path.join(rootDir, appDir);
   if (initDb) {
-    const modelDir = dir + '/model';
+    const modelDir = appDirAbsolutePath + '/model';
     const { port, host, database, username, password, dialect } = dbConfig;
     const s = new Sequelize(database, username, password, {
       host,
@@ -49,16 +58,18 @@ export async function load(
     }
     await initSeq(s);
   }
-  const requireMapDir = dir + '/autoGenerateRequire';
+  let iceFs = new IceFs();
+ 
+  const requireMapDir = path.join(rootDir, '/__autoGenerate__/autoGenerateRequire');
   const requireMapFile = requireMapDir + '/index.ts';
-  const controllerDir = dir + '/controller';
-  const apiDocAbsoluteDir = dir + '/apiDoc';
-  let iceFs = new IceFs
+  const controllerDir = appDirAbsolutePath + '/controller';
+  const apiDocAbsoluteDir = path.join(rootDir, '/__autoGenerate__/apiDoc');
   if (env === 'build') {
-    iceFs.makeDir(requireMapDir)
-    iceFs.deleteAllFile(requireMapDir)
-    iceFs.makeDir(apiDocAbsoluteDir)
-    iceFs.deleteAllFile(apiDocAbsoluteDir)
+    iceFs.makeDir(path.join(rootDir, '/__autoGenerate__'));
+    iceFs.makeDir(requireMapDir);
+    iceFs.deleteAllFile(requireMapDir);
+    iceFs.makeDir(apiDocAbsoluteDir);
+    iceFs.deleteAllFile(apiDocAbsoluteDir);
     fs.writeFileSync(
       requireMapFile,
       `const requireMap = new Map
@@ -76,10 +87,11 @@ export async function load(
           const ast = parse(fileName);
           generateFinalParams(ast, controller.prototype, controllerDir);
           if (env === 'build') {
+            
             iceFs.BeforeAppend(
               requireMapFile,
-              `import ${controller.name} from '../${path
-                .relative(dir, fileName)
+              `import ${controller.name} from '${path
+                .relative(apiDocAbsoluteDir, fileName)
                 .slice(0, -3)}'`
             );
             fs.appendFileSync(
@@ -108,7 +120,7 @@ export async function load(
         router.prefix(metadata.path);
         app.use(router.routes());
         app.use(router.allowedMethods());
-        if (env === 'build' && apiDoc) {
+        if (env === 'build' && enAbleApiDoc) {
           const controllerMethod =
             controllerMethodsApiDocMap.get(controller.prototype) || new Map();
           let paramsTypeMap = typeMap.get(controller.prototype);
@@ -155,12 +167,12 @@ export async function load(
     }
   }
 
-  if (apiDoc && env !== 'build' && apiDocDir) {
+  if (enAbleApiDoc && env !== 'build' && apiDocDir) {
     let router = new Router();
-    app.use(require('koa-static')(path.join(dir, apiDocDir)));
+    app.use(require('koa-static')(path.join(rootDir, apiDocDir)));
     try {
       app.use(
-        views(path.join(dir, apiDocDir), {
+        views(path.join(rootDir, apiDocDir), {
           // extension: 'ejs'
         })
       );

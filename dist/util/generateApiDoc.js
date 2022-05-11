@@ -74,7 +74,7 @@ function generate(params, generateType) {
             return startStr + result.slice(0, -1) + endStr;
         }
         function generateArray(o, indent) {
-            return '[' + generateBody(o.__value__, indent + 2) + ']';
+            return '[ ' + generateBody(o.__value__, indent + 2) + ' ]';
         }
     }
     return result;

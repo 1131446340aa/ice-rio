@@ -12,8 +12,10 @@ export type routerFn = (
   }
 ) => any;
 
-export const typeMap: WeakMap<Object, Map<string | symbol, Record<string,string>>> =
-  new WeakMap();
+export const typeMap: WeakMap<
+  Object,
+  Map<string | symbol, Record<string, string>>
+> = new WeakMap();
 export const importedControllerMap: WeakMap<Object, Record<string, string>> =
   new WeakMap();
 
@@ -49,9 +51,10 @@ export interface IGenerateApiDoc {
 }
 
 export interface ILoad {
-  dir: string;
+  rootDir: string;
+  appDir?: string;
   initDb?: boolean;
-  apiDoc?: boolean;
+  enAbleApiDoc?: boolean;
   apiDocDir?: string;
   dbConfig?: {
     port: number;
@@ -61,5 +64,5 @@ export interface ILoad {
     password: string;
     dialect: string;
   };
-  env?:'prod' | 'dev' | 'build'
+  env?: 'prod' | 'dev' | 'build';
 }
