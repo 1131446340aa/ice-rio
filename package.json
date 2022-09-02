@@ -1,0 +1,41 @@
+{
+  "name": "ice-rio",
+  "version": "1.5.2",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "watch": "nodemon --watch '/*' --exec 'ts-node index.ts' --verbose -e ts"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.17.10",
+    "@babel/plugin-proposal-class-properties": "^7.16.7",
+    "@babel/plugin-proposal-decorators": "^7.17.9",
+    "@types/babel-traverse": "^6.25.7",
+    "@types/koa": "^2.13.4",
+    "@types/koa-router": "^7.4.4",
+    "@types/koa-static": "^4.0.2",
+    "@types/ws": "^8.5.3",
+    "await-to-js": "^3.0.0",
+    "babel-traverse": "^6.26.0",
+    "ice-rio": "^1.3.11",
+    "ioredis": "^5.2.2",
+    "koa": "^2.13.4",
+    "koa-bodyparser": "^4.3.0",
+    "koa-mount": "^4.0.0",
+    "koa-router": "^10.1.1",
+    "koa-static": "^5.0.0",
+    "koa-view": "^2.1.4",
+    "koa-views": "^8.0.0",
+    "mysql2": "^2.3.3",
+    "nodemon": "^2.0.16",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^6.19.0",
+    "tern": "^0.24.3",
+    "typescript": "^4.6.4",
+    "ws": "^8.8.1"
+  },
+  "devDependencies": {
+    "@types/koa-bodyparser": "^4.3.7"
+  }
+}

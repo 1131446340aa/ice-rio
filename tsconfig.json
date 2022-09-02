@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+      "target": "es2017",
+      "module": "commonjs",
+      "strict": false,
+      "noLib": false,
+      "allowJs": true,
+      "sourceMap": false,
+      "declaration": true,
+      "skipLibCheck": true,
+      "alwaysStrict": false,
+      "noImplicitAny": true,
+      "removeComments": true,
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "preserveConstEnums": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "allowSyntheticDefaultImports": true,
+      "strictPropertyInitialization": false,
+      "outDir": "./dist",
+      
+  },
+  "include": [
+      "lib/**/*",
+      "util/**/*",
+      "middleWare/**/*",
+      "./index.ts"
+  ],
+  "exclude": [
+      "node_modules",
+  ]
+}
