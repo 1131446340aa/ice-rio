@@ -4,13 +4,13 @@ import {
   ALL,
   Methods,
   paramType,
-  routerFn,
   controllerMethodsMap
 } from '../util/constants';
 import { getParamNames } from '../util/getParamNames';
 import { RouterReturnType } from '../util/render';
 import { generateLogId } from '../util';
 import { Server } from './server';
+import { routerFn } from '../util/type';
 
 /**
  * @description: 创建参数装饰器的高阶函数
@@ -23,11 +23,9 @@ function createParamMapping(p: paramType) {
       //@ts-ignore
       const originParamNames = getParamNames(_[key]);
       let controller = controllerMethodsMap.get(_);
-      if (!controller) {
-        controllerMethodsMap.set(_, (controller = new Map()));
-      }
+      !controller && controllerMethodsMap.set(_, (controller = new Map()));
       let methods = controller.get(key);
-      if (!methods) {
+      if (!methods)
         //@ts-ignore
         controller.set(
           key,
@@ -41,14 +39,17 @@ function createParamMapping(p: paramType) {
             }
           })
         );
-      }
+
       //@ts-ignore
       if (!methods!.params[index]) methods!.params[index] = {};
       methods!.params[index].decorateType = p;
-      methods!.params[index].name = attr === ALL ? originParamNames[index] : (attr ||  originParamNames[index]);
-      methods!.params[index].decorateValue = attr
-      if(attr === ALL && methods!.params[index].decorateType === 'Params'){
-        throw new Error('The Params do not support ALL')
+      methods!.params[index].name =
+        attr === ALL
+          ? originParamNames[index]
+          : attr || originParamNames[index];
+      methods!.params[index].decorateValue = attr;
+      if (attr === ALL && methods!.params[index].decorateType === 'Params') {
+        throw new Error('The Params do not support ALL');
       }
       methods!['methodDescription'].routerName = key;
       return _;
@@ -67,33 +68,21 @@ export const Headers = createParamMapping('Headers');
  */
 function initMethod(): Record<Methods, routerFn> {
   // @ts-ignore
-  return ['Post', 'Get', 'Head', 'Put', 'Patch', 'Option','Delete'].reduce(
+  return ['Post', 'Get', 'Head', 'Put', 'Patch', 'Option', 'Delete'].reduce(
     // @ts-ignore
     (prev, curr: Methods) => {
       prev[curr] = function (
         path?: string,
         config?: { middleWare: Middleware[] }
       ) {
-        return function (target: any, key: string) {
-          if (!target['router']) target['router'] = new Router();
-          path = path || `/${key}`;
-          if (!controllerMethodsMap.get(target)) {
-            controllerMethodsMap.set(target, new Map());
-          }
-          if (!controllerMethodsMap.get(target)?.get(key)) {
-            controllerMethodsMap
-              .get(target)
-              //@ts-ignore
-              .set(key, { methodDescription: {}, params: [], paramsType: {} });
-          }
-          let map = controllerMethodsMap.get(target)?.get(key);
-          let methodDescription = map?.methodDescription || {};
-          let params = map.params.filter((i) => i.decorateType === 'Params');
-          //@ts-ignore
-          methodDescription.path = path;
-          // 有问题，如果 get 和 post 等方法使用同一个路由会被覆盖，暂时忽略这种情况
-          //@ts-ignore
-          methodDescription.method = curr;
+        return method;
+
+        function method(target: any, key: string) {
+          /**
+           * @description: 路由被代理后的函数
+           * @param {array} args
+           * @return {*}
+           */
           const fn = function (...args: any[]) {
             const [ctx, next] = args;
             ctx.logId = generateLogId();
@@ -101,56 +90,105 @@ function initMethod(): Record<Methods, routerFn> {
             const paramSet =
               controllerMethodsMap.get(target)?.get(key)?.params || [];
             // 使用参数装饰器装饰后的参数
-            const finalParams = new Array(target[key].OriginLength)
-              .fill(1)
-              .reduce((prev, curr, index) => {
-                const p = paramSet[index];
-                const params =
-                  ctx.request[p?.decorateType?.toLocaleLowerCase()] || {};
-                prev.push(
-                  p?.name ? (p.decorateValue === ALL ? params : params[p.name]) : ctx
-                );
-                return prev;
-              }, [] as any[]);
+            const finalParams = getFinalParams({ target, key, paramSet, ctx });
             let res = Promise.resolve(
-              target[key].call(target, ...finalParams)
+              // 必须实例化，要不然获取不到属性值
+              target[key].call(new target.constructor(), ...finalParams)
             ).then(async (r) => {
-              if (r instanceof RouterReturnType) {
-                if (r.type === 'render') {
-                  await ctx.render(r.path, r.config);
-                }
-              } else {
-                r && (ctx.body = r);
-              }
+              r instanceof RouterReturnType
+                ? r.type === 'render' && (await ctx.render(r.path, r.config))
+                : r !== void 0 && (ctx.body = r)
               next();
             });
             return res;
           };
+          let { middleWare, router, routerPath } = processControllerMethod();
 
-          let middleWare = config?.middleWare || [];
-          let router = target['router'];
-          let p = params.reduce((curr, prev) => {
-            //@ts-ignore
-            return curr + '/:' + prev['name'];
-          }, path);
+          runMiddleWare();
+          /**
+           * @description: 处理中间件
+           * @return {*}
+           */
           function runMiddleWare() {
             while (middleWare.length) {
-              let cur = middleWare.shift();
-              router = router[curr.toLowerCase()](p, cur!);
+              let curMiddleWare = middleWare.shift();
+              router = router[curr.toLowerCase()](routerPath, curMiddleWare!);
             }
-            router?.[curr.toLowerCase()](p, fn);
+            router?.[curr.toLowerCase()](routerPath, fn);
           }
-          runMiddleWare();
-        };
+
+          function processControllerMethod() {
+            if (!target['router']) target['router'] = new Router();
+            path = path || `/${key}`;
+            if (!controllerMethodsMap.get(target))
+              controllerMethodsMap.set(target, new Map());
+            if (!controllerMethodsMap.get(target)?.get(key))
+              controllerMethodsMap.get(target).set(key, {
+                //@ts-ignore
+                methodDescription: {},
+                params: [],
+                paramsType: {}
+              });
+
+            let map = controllerMethodsMap.get(target)?.get(key);
+            let methodDescription = map?.methodDescription || {};
+            let params = map.params.filter((i) => i.decorateType === 'Params');
+            //@ts-ignore
+            methodDescription.path = path;
+            // 有问题，如果 get 和 post 等方法使用同一个路由会被覆盖，暂时忽略这种情况
+            //@ts-ignore
+            methodDescription.method = curr;
+            let middleWare = config?.middleWare || [];
+            let router = target['router'];
+            let routerPath = params.reduce((curr, prev) => {
+              //@ts-ignore
+              return curr + '/:' + prev['name'];
+            }, path);
+            return { middleWare, router, routerPath, path };
+          }
+        }
       };
       return prev;
     },
     {} as Record<Methods, routerFn>
   );
+
+  /**
+   * @description: 被装饰器装饰后的参数
+   * @param {any} target
+   * @param {string} key
+   * @param {object} paramSet
+   * @param {any} ctx
+   * @return {*}
+   */
+  function getFinalParams({
+    target,
+    key,
+    paramSet,
+    ctx
+  }: {
+    target: any;
+    key: string;
+    paramSet: {
+      isRequired: boolean;
+      name: string;
+      typeValue: any;
+      decorateType: string;
+      decorateValue: string;
+    }[];
+    ctx: any;
+  }) {
+    return new Array(target[key].OriginLength)
+      .fill(1)
+      .reduce((prev, curr, index) => {
+        const p = paramSet[index];
+        const params = ctx.request[p?.decorateType?.toLocaleLowerCase()] || {};
+        prev.push(
+          p?.name ? (p.decorateValue === ALL ? params : params[p.name]) : ctx
+        );
+        return prev;
+      }, [] as any[]);
+  }
 }
 
 export const { Post, Get, Head, Put, Patch, Option, Delete } = initMethod();
- 
-// class createRouteParam {
-//   constructor(public type: paramType, public value: string | typeof All) {}
-// }

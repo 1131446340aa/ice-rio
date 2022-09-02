@@ -1,6 +1,6 @@
 import awaitToJs from 'await-to-js';
 import { Context, Next } from 'koa';
-import { ErrorCode } from '../util/enum';
+import { ErrorCode } from '../util/type';
 export function ErrorMiddleware() {
   return async (ctx: Context, next: Next) => {
     const [error] = await awaitToJs(next());

@@ -1,4 +1,4 @@
-import { Middleware } from 'koa';
+
 import { viewsOptions } from 'koa-views';
 import { RedisOptions } from 'ioredis';
 
@@ -20,24 +20,7 @@ export type Methods =
   | 'Option'
   | 'Delete';
 
-export type routerFn = (
-  path?: string,
-  config?: {
-    middleWare: Middleware[];
-  }
-) => any;
 
-
-export interface IGenerateApiDoc {
-  method: string;
-  controller: string;
-  path: string;
-  routerName: string | symbol;
-  description: string;
-  fileName: string;
-  params: any[];
-  returns: any;
-}
 
 export interface ILoad {
   appDir?: string;
@@ -59,8 +42,6 @@ export interface ILoad {
   worker?: number;
   env?: 'prod' | 'dev' | 'build';
 }
-
-// export const server = new Server();
 
 export const controllerMethodsMap: WeakMap<
   Object,
@@ -91,6 +72,6 @@ export const controllerMethodsMap: WeakMap<
   >
 > = new WeakMap();
 
-export type RioType<T, U = any> = T;
+export type RioType<T extends U, U  = any> = T;
 
 // controllerMethodsMap

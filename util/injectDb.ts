@@ -1,5 +1,11 @@
 import { error } from 'console';
 import { Server } from '../lib/server';
+
+/**
+ * @description: 通过注入的方式引入表
+ * @param {string} modelKey
+ * @return {*}
+ */
 export const InjectDB = (modelKey: string) => {
   return (target: any, key: string) => {
     try {

@@ -5,14 +5,17 @@ import { Context } from 'koa';
 //   [key: string | symbol | number]:any
 // }
 
-export class Server {
+// 纯粹为了定义 ts,没任何作用
+class ExtendsAttr {
+  app: IceServerApp;
+  table: IceServerTable;
+}
+export class Server extends ExtendsAttr {
   private static contexts: Record<number, Context> = {};
   // public extendServer:IExtendServer = {}
   static hooks = createHook({
     // 对象构造时会触发 init 事件。
     init: function (asyncId, type, triggerId, resource) {
-      // console.log(Server.contexts,type,resource);
-
       // triggerId 即为当前函数的调用者的 asyncId 。
       if (Server.contexts[triggerId]) {
         // 设置当前函数的异步上下文与调用者的异步上下文一致。
@@ -30,16 +33,12 @@ export class Server {
     this.contexts[executionAsyncId()] = ctx;
   }
 
-  // static extend(config:IExtendServer){
-  //   //@ts-ignore
-  //   Server.prototype.extendServer = config
-  // }
   get ctx() {
     return Server.contexts[executionAsyncId()];
   }
 
   get logId(): string {
-    return this.ctx['headers']['req-id']  ||  this.ctx['logId'];
+    return this.ctx['headers']['req-id'] || this.ctx['logId'];
   }
   get headers() {
     return this.ctx['headers'];
@@ -56,17 +55,18 @@ export class Server {
           //@ts-ignore
           return v[key]['stress'];
         }
+        //@ts-ignore
         return v[key];
       }
     });
   }
-  get rides():Redis {
+  get rides(): Redis {
     //@ts-ignore
-    let r = Server.prototype.__singleRides__
-    if(!r){
+    let r = Server.prototype.__singleRides__;
+    if (!r) {
       console.log('please input redisConfig');
     }
-    return r
+    return r;
   }
 }
 //@ts-ignore
@@ -81,4 +81,3 @@ export interface IceServerApp {
 export interface IceServerTable {
   [key: string]: any;
 }
-

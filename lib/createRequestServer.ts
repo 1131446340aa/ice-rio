@@ -12,9 +12,8 @@ export class CreateRequestServer {
   constructor(
     public config: { baseUrl: string; timeout?: number; ts?: boolean }
   ) {
-    if (!this.config.timeout) {
-      this.config.timeout = 5000;
-    }
+    if (!this.config.timeout) this.config.timeout = 5000;
+
     if (this.config.baseUrl[this.config.baseUrl.length - 1] === '/')
       this.config.baseUrl = this.config.baseUrl.slice(0, -1);
     if (globalThis.window) {
@@ -28,7 +27,10 @@ export class CreateRequestServer {
       );
     }
   }
-
+  /**
+   * @description: 通过 websocket 连接服务器
+   * @return {*}
+   */
   async connect() {
     let message = '';
     if (globalThis.window) {
@@ -63,7 +65,13 @@ export class CreateRequestServer {
     }
     return message;
   }
-  async install(generateTS?:boolean): Promise<IRequestServer> {
+
+  /**
+   * @description: 生成客户端调用服务端的方法
+   * @param {boolean} generateTS
+   * @return {*}
+   */
+  async install(generateTS?: boolean): Promise<IRequestServer> {
     const baseUrl = this.config.baseUrl;
     let message = await this.connect();
     let server: Record<string, Record<string, any>> = {};
@@ -76,12 +84,13 @@ export class CreateRequestServer {
           return await axios({
             //@ts-ignore
             method: message[serverName][routerName].method,
-            
             url: `${baseUrl}${
               //@ts-ignore
               message[serverName][routerName]['path']
+            }${
               //@ts-ignore 方法（get、post....） 等入参的情况
-            }${message[serverName][routerName]['routerName'] || ('/' + routerName)}${config.path ? config.path : ''}`,
+              message[serverName][routerName]['routerName'] || '/' + routerName
+            }${config.path ? config.path : ''}`,
             ...config
           });
         };
@@ -89,11 +98,16 @@ export class CreateRequestServer {
     });
     this._server = server;
     this.message = message;
-    if(generateTS){
-      await this.generateTS()
+    if (generateTS) {
+      await this.generateTS();
     }
     return server;
   }
+
+  /**
+   * @description: 本地生成客户端需要的 ts 类型
+   * @return {*}
+   */
   async generateTS() {
     if (globalThis.window) {
       throw Error('generateTS 请在 node 环境运行');
@@ -113,8 +127,8 @@ export class CreateRequestServer {
             ...v.headers,
             'req-id': 'string | undefined',
             stress: 'string | undefined',
-            __optional__:true,
-            __axiosRequestHeaders__:true
+            __optional__: true,
+            __axiosRequestHeaders__: true
           };
           flag = true;
         }
@@ -159,8 +173,14 @@ export class CreateRequestServer {
     fs.writeFileSync(path.join(cwd, '/autoGenerate/type.d.ts'), r);
     return r;
   }
+
+  /**
+   * @description: 将函数的类型的 JSON 描述转化为 interface
+   * @param {any} obj
+   * @return {*}
+   */
   private type2Interface(obj: any) {
-    if(typeof obj !== 'object') return obj
+    if (typeof obj !== 'object') return obj;
     let u = '';
     Object.keys(obj).forEach((attr) => {
       if (typeof obj[attr] === 'string') {
@@ -169,32 +189,27 @@ export class CreateRequestServer {
         `;
       }
       if (typeof obj[attr] === 'object') {
-        const optional = obj[attr]['__optional__']
-        const axiosRequestHeaders = obj[attr]['__axiosRequestHeaders__']
-        delete obj[attr]['__optional__']
-        delete obj[attr]['__axiosRequestHeaders__']
-        const isArray = obj[attr]['__value__']
-        u += `'${attr}'${optional ? '?' : ''}: ${this.type2Interface(isArray ? obj[attr]['__value__'] : obj[attr])} ${axiosRequestHeaders ? '& AxiosRequestHeaders' : ''}${isArray ? '[]' : ''};
-        ` ;
+        const optional = obj[attr]['__optional__'];
+        const axiosRequestHeaders = obj[attr]['__axiosRequestHeaders__'];
+        delete obj[attr]['__optional__'];
+        delete obj[attr]['__axiosRequestHeaders__'];
+        const isArray = obj[attr]['__value__'];
+        u += `'${attr}'${optional ? '?' : ''}: ${this.type2Interface(
+          isArray ? obj[attr]['__value__'] : obj[attr]
+        )} ${axiosRequestHeaders ? '& AxiosRequestHeaders' : ''}${
+          isArray ? '[]' : ''
+        };
+        `;
       }
     });
     return `{
       ${u}
     }`;
   }
-  get server(){
-    if(!this._server){
-      throw new Error ('请先等待 install 方法执行完成')
+  get server() {
+    if (!this._server) {
+      throw new Error('请先等待 install 方法执行完成');
     }
-    return this._server
+    return this._server;
   }
 }
-
-// export interface IRequestServer {
-//   User: {
-//     info: (config: {
-//       body: { user: { a?: string }; user1: { a?: string } };
-//     }) => Promise<{ userName: string }>;
-//     test: ()=>Promise<void>;
-//   };
-// }

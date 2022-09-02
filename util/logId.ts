@@ -1,5 +1,8 @@
-
 import { timeFormator } from './time';
+/**
+ * @description: 生成 logId
+ * @return {*}
+ */
 export function generateLogId(): string {
   const date = new Date();
   const timeStr = timeFormator(date, 'yyyyMMddHHmmss');

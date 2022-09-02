@@ -1,4 +1,4 @@
-import { ErrorCode } from './enum';
+import { ErrorCode } from './type';
 
 export class HTTPError extends Error {
   constructor(public message: string, public status: ErrorCode) {
@@ -12,7 +12,6 @@ export function underline(str: string) {
 
 export { ALL } from './constants';
 
-export * from './enum';
 
 export { InjectDB } from './injectDb';
 
@@ -25,3 +24,5 @@ export * from './logId';
 export * from './time';
 
 export { InjectServer } from './injectServer';
+
+export * from 'sequelize';

@@ -1,7 +1,7 @@
 import { HTTPError } from '../util';
-import { ErrorCode } from './enum';
-import {  controllerMethodsMap } from './constants';
-import { CreateArrayType } from './babel';
+import { ErrorCode } from './type';
+import { controllerMethodsMap } from './constants';
+import { CreateArrayType } from '../lib/babel';
 type Validator = (
   x: any,
   paramName: string,
@@ -12,14 +12,13 @@ const validateMap: Record<string, Validator[]> = {};
 
 function typedDecoratorFactory(validator: Validator): ParameterDecorator {
   return (_, key, index) => {
-   
     const target = validateMap[key as string] ?? [];
     target[index] = validator;
     validateMap[key as string] = target;
   };
 }
 /**
- * @description: 和 required 函数搭配，用于校验请求的参数类型
+ * @description: 和 required 函数搭配，用于校验请求的参数类型。代码写的很烂,不想改了,摆烂。累了,毁灭去吧 …………
  */
 export function validated(
   _: Object,
@@ -39,19 +38,13 @@ export function validated(
         //@ts-ignore
         const { __env__, __dir__ } = _;
         let validatorParams = {};
-        if (__env__ === 'prod') {
-          // Todo: 优化此处,await import(__dir__) 为常量，不应该每次参数校验都进行  await
-          validatorParams = (await import(__dir__)).default.get(_)?.get(key)?.paramsType || {};
-        } else {
-          validatorParams =
-            controllerMethodsMap.get(_)?.get(key)?.paramsType || {};
-        }
-        //@ts-ignore
-
+        validatorParams =
+          __env__ === 'prod'
+            ? (await import(__dir__)).default.get(_)?.get(key)?.paramsType || {}
+            : controllerMethodsMap.get(_)?.get(key)?.paramsType || {};
         const params = controllerMethodsMap.get(_)?.get(key)?.params || [];
         const result = await validator(
           arg,
-          //@ts-ignore
           params[index].name,
           //@ts-ignore
           validatorParams[params[index].name]
@@ -71,7 +64,11 @@ export function validated(
   };
   descriptor.value.OriginLength = length;
 }
-
+/**
+ * @description: 校验是否是整性
+ * @param {number} i
+ * @return {*}
+ */
 export function requireInt(i: number) {
   if (!Number.isInteger(i)) {
     return 'please input Int';
@@ -79,6 +76,12 @@ export function requireInt(i: number) {
   return '';
 }
 
+/**
+ * @description: 校验是否是数组字符串
+ * @param {string} i
+ * @param {*} require
+ * @return {*}
+ */
 export function requireArrayString(i: string, require = false) {
   if (!i && !require) return '';
   try {
@@ -129,14 +132,25 @@ export function required<T = unknown>(
       'string' | 'number' | 'boolean' | customRequired
 ) {
   return typedDecoratorFactory(async (query, paramsName, defaultType) => {
+    /**
+     * @description: 检验参数是否合法
+     * @param {any} type
+     * @param {any} query
+     * @param {*} key
+     * @return {*}
+     */
     function check(type: any, query: any, key = ''): string {
+      /**
+       * @description: 检验对象类型
+       * @return {*}
+       */
       function checkObject(
         type: Record<string, string>,
         query: Record<string, string>,
         key: string
       ) {
-        if(type.__optional__){
-          if(query === undefined) return ''
+        if (type.__optional__) {
+          if (query === undefined) return '';
         }
         if (typeof query !== 'object') {
           return `The type of verification parameter ${key} is an object,but the type of input is ${typeof query}, please check`;
@@ -153,6 +167,13 @@ export function required<T = unknown>(
         }
         return '';
       }
+      /**
+       * @description: 检验普通类型
+       * @param {string} type
+       * @param {any} query
+       * @param {string} key
+       * @return {*}
+       */
       function checkOrdinaryType(type: string, query: any, key: string) {
         const index = type.indexOf('|');
         if (query === undefined) {
@@ -169,18 +190,32 @@ export function required<T = unknown>(
         }
         return '';
       }
+      /**
+       * @description: 自定义校验
+       * @param {Function} type
+       * @param {any} query
+       * @param {string} key
+       * @return {*}
+       */
       function checkFunction(type: Function, query: any, key: string) {
         let ret = type(query);
         if (ret)
           return `The parameter ${key} is a custom check,the error message is as follows:${ret},please verify the parameters`;
         return '';
       }
+      /**
+       * @description: 检验数组类型
+       * @param {any} type
+       * @param {any} query
+       * @param {*} key
+       * @return {*}
+       */
       function checkArrayType(type: any, query: any[], key = '') {
         if (!Array.isArray(query)) {
           return `The parameter ${key} is array,but the type of input is ${typeof query},please verify the parameters`;
         }
-        if(type.__optional__){
-          if(query === undefined) return ''
+        if (type.__optional__) {
+          if (query === undefined) return '';
         }
         return check(type.__value__, query[0], key + `[0]`);
       }
