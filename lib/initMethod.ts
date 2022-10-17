@@ -99,7 +99,7 @@ function initMethod(): Record<Methods, routerFn> {
                 ? r.type === 'render' && (await ctx.render(r.path, r.config))
                 : r !== void 0 && (ctx.body = r)
               next();
-            });
+            })
             return res;
           };
           let { middleWare, router, routerPath } = processControllerMethod();

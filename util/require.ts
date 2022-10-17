@@ -43,6 +43,7 @@ export function validated(
             ? (await import(__dir__)).default.get(_)?.get(key)?.paramsType || {}
             : controllerMethodsMap.get(_)?.get(key)?.paramsType || {};
         const params = controllerMethodsMap.get(_)?.get(key)?.params || [];
+        
         const result = await validator(
           arg,
           params[index].name,

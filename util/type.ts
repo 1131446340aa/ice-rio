@@ -22,3 +22,7 @@ export interface IGenerateApiDoc {
   params: any[];
   returns: any;
 }
+
+
+
+export type IceEnv = 'prod' | 'build' | 'dev'

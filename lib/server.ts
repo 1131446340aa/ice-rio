@@ -15,7 +15,7 @@ export class Server extends ExtendsAttr {
   // public extendServer:IExtendServer = {}
   static hooks = createHook({
     // 对象构造时会触发 init 事件。
-    init: function (asyncId, type, triggerId, resource) {
+    init: function (asyncId, type, triggerId) {
       // triggerId 即为当前函数的调用者的 asyncId 。
       if (Server.contexts[triggerId]) {
         // 设置当前函数的异步上下文与调用者的异步上下文一致。

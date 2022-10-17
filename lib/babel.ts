@@ -34,11 +34,7 @@ export function parse(fileName: string) {
  * @description: 继续 class 中函数的返回值和参数
  * @return {*}
  */
-export function generateFinalParams(
-  ast: any,
-  controller: Object,
-  enableApiDoc = false
-) {
+export function generateFinalParams(ast: any, controller: Object) {
   const methods = controllerMethodsMap.get(controller) || new Map();
   let className = '';
   traverse(ast, {
@@ -48,6 +44,7 @@ export function generateFinalParams(
       let methodName = methodNode.key.name;
       let returnNodes = methodNode.returnType;
       let u = methods.get(methodName);
+
       let params = u?.params || [];
       // 如果函数没有参数,则不需要参数校验和生成 api doc,因此可以直接返回
       if (!params.length) return;
@@ -60,10 +57,9 @@ export function generateFinalParams(
        * @return {*}
        */
       function processParams() {
-        enableApiDoc &&
-          (!returnNodes?.typeAnnotation
-            ? console.warn(`${className}.${methodName} : need add return Type`)
-            : (u.returnType = generateReturnType(returnNodes.typeAnnotation)));
+        !returnNodes?.typeAnnotation
+          ? console.warn(`${className}.${methodName} : need add return Type`)
+          : (u.returnType = generateReturnType(returnNodes.typeAnnotation));
 
         u.paramsType = getParams({
           node: methodNode,
@@ -341,12 +337,10 @@ function processTSUnionType({
  * @description: 解析 validated 文件
  * @return {*}
  */
-export function getValidatedTypeStore() {
+export function getValidatedTypeStore(interfaceFileName: string) {
   let validatedTypeAst;
   try {
-    validatedTypeAst = parse(
-      path.join(process.cwd(), '/interface/validated.ts')
-    );
+    validatedTypeAst = parse(interfaceFileName);
   } catch {}
   if (validatedTypeAst) {
     traverse(validatedTypeAst, {

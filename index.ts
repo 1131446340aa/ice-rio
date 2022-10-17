@@ -1,20 +1,20 @@
 import koaBodyParser from 'koa-bodyparser';
 import Koa, { Middleware } from 'koa';
-import { load } from './lib/load';
+import { lifecycleListener, load } from './lib/load';
 import { ILoad } from './util/constants';
 import cluster from 'cluster'
 import { createServer, Server } from 'http'
-import WebSocket from 'ws';
 export interface IConfig {
   hooks?: {
     beforeCreated?: Middleware[];
     afterCreated?: Middleware[];
   };
+  plugins:IcePlugin[]
+  // plugins:any[]
 }
-import fs from 'fs'
-import path from 'path'
-const rootDir = process.cwd()
+import { IcePlugin } from './plugins/basePlugin';
 export class IceRio extends Koa {
+ //@ts-ignore
   private loadConfig: ILoad = {}
   constructor(public config: IConfig) {
     super();
@@ -36,7 +36,7 @@ export class IceRio extends Koa {
     env = 'dev',
     viewsConfig = {},
     worker = 1,
-    redisConfig = {}
+    redisConfig = {},
   }: ILoad) {
     this.loadConfig = {
       initDb,
@@ -46,34 +46,20 @@ export class IceRio extends Koa {
       appDir,
       env,
       viewsConfig,
-      worker
+      worker,
     }
     //@ts-ignore
-    await load(this, { initDb, dbConfig, enableApiDoc, apiDocDir, env, appDir, viewsConfig, redisConfig });
+    await load(this, { initDb, dbConfig, enableApiDoc, apiDocDir, env, appDir, viewsConfig, redisConfig,plugins:this.config.plugins });
     this.config?.hooks?.afterCreated?.forEach((i) => {
       this.use(i);
     });
   }
   // @ts-ignore
-  override listen (...config: any[]) {
+  override async listen (...config: any[]) {
     const server = createServer(this.callback())
-    
-    if (this.loadConfig.env !== 'build') {
-      const WebSocketApi = (wss: WebSocket.Server<WebSocket.WebSocket>) => {
-        wss.on('connection', function connection (ws) {
-          const serverJSONAbsoluteDir = path.join(
-            rootDir,
-            '/__autoGenerate__/serverJSON/serverJSON.json'
-          );
-          
-          ws.send(String(fs.readFileSync(serverJSONAbsoluteDir)));
-        });
-      }
-  
-      const wss = new WebSocket.Server({ server,path:'/websockets' });
-      WebSocketApi(wss)
-      this.loadConfig?.worker === 1 ? server.listen(...config) : this.createCluster(server,config);
-    }
+    await lifecycleListener(this.config.plugins,'beforeListen',{server})
+    if(this.loadConfig.env === 'build') return this
+    this.loadConfig?.worker === 1 ? server.listen(...config) : this.createCluster(server,config);
     return this
   }
 
@@ -112,3 +98,15 @@ export { Server, IceServerApp, IceServerTable } from './lib/server'
 export * from './lib/createRequestServer'
 
 export {RioType} from './util/constants'
+
+export * from './plugins/apiDocPlugin'
+
+export * from './plugins/parsePlugin'
+
+export * from './plugins/parseInterfacePlugin'
+
+export * from './plugins/clientRequestMethodPlugin'
+
+export * from './plugins/generateTypePlugin'
+
+export * from './plugins/basePlugin'

@@ -1,6 +1,7 @@
 
 import { viewsOptions } from 'koa-views';
 import { RedisOptions } from 'ioredis';
+// import { IcePlugin } from '../plugins/basePlugin';
 
 export const ALL = '__All__';
 export type paramType =
@@ -38,9 +39,12 @@ export interface ILoad {
     dialect: string;
     is_stress?: boolean;
   };
+  
+  // plugins:IcePlugin[];
   redisConfig?: RedisOptions;
   worker?: number;
   env?: 'prod' | 'dev' | 'build';
+
 }
 
 export const controllerMethodsMap: WeakMap<
